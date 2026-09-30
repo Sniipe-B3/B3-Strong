@@ -18,12 +18,15 @@ version à l'autre et le démarrage hors connexion ont été vérifiés dans un
 navigateur automatisé. Un ancien onglet ouvert avant cette amélioration peut
 demander un dernier rafraîchissement.
 
-Le premier lancement permet maintenant de choisir une petite routine, ses
-objectifs et ses jours. Cette routine est enregistrée localement dans le
-navigateur, sans compte. L'écran « Aujourd'hui » la retrouve après un
-rafraîchissement et reconnaît les jours de repos. Le bouton « Commencer » ouvre
-encore un aperçu : il ne lance pas de vraie séance. Les onglets Exercices et
-Progrès sont des écrans d'attente. Aucune séance n'est encore enregistrée.
+Le premier lancement permet de choisir une petite routine, ses objectifs et ses
+jours, conservés localement dans le navigateur. « Aujourd'hui » reconnaît les
+jours de repos. Une vraie séance chronométrée ou comptée manuellement peut être
+mise en pause, reprise, passée ou arrêtée. Les résultats, y compris partiels,
+sont sauvegardés localement ; le dernier apparaît sur « Aujourd'hui » après un
+rechargement. Une séance interrompue par le navigateur revient en pause, sans
+compter le temps passé hors de l'application. Une mise à jour de la PWA attend
+la fin d'une séance avant de proposer l'actualisation. Les onglets Exercices et
+Progrès restent des écrans d'attente : l'historique complet viendra plus tard.
 
 ## Ordre de travail
 
@@ -46,6 +49,8 @@ rafraîchir la page et retrouver exactement ses choix. Un jour de repos est
 clairement indiqué et permet toujours une séance volontaire.
 
 ### 2. Vraie séance et enregistrement fidèle
+
+**Statut : terminé et vérifié par tests ; déployé sur Firebase Hosting.**
 
 **Modèle conseillé : GPT-6.1 Sol, niveau High**, car le chronomètre, les pauses
 et la reprise demandent des règles précises.
@@ -152,5 +157,4 @@ deux sujets distincts.
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.
 
-La prochaine étape de développement est **2. Vraie séance et enregistrement
-fidèle**.
+La prochaine étape de développement est **3. Modifier sa routine**.

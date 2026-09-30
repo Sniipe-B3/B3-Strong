@@ -50,10 +50,50 @@
       // Do not reload on first installation: this page already has fresh files.
       const wasControlled = Boolean(navigator.serviceWorker.controller);
       let reloading = false;
+      let updatePending = false;
+      const activeSessionKey = 'petit_depart_active_session_v1';
+      const sessionIsActive = function () {
+        return window.localStorage.getItem(activeSessionKey) !== null;
+      };
+
+      const showDeferredUpdate = function () {
+        if (updatePending) return;
+        updatePending = true;
+        const banner = document.createElement('div');
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;background:#303438;color:#F3F0E7;padding:16px;border:1px solid #F4CC46;border-radius:12px;font:16px sans-serif;box-shadow:0 4px 16px #0008';
+        const message = document.createElement('span');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Actualiser maintenant';
+        button.style.cssText = 'display:block;margin-top:10px;padding:10px 14px;background:#F4CC46;color:#17191B;border:0;border-radius:8px;font-weight:bold';
+        button.addEventListener('click', function () {
+          if (!sessionIsActive()) {
+            reloading = true;
+            window.location.reload();
+          }
+        });
+        banner.append(message, button);
+        document.body.appendChild(banner);
+        const updateBanner = function () {
+          const active = sessionIsActive();
+          message.textContent = active
+            ? 'Mise à jour prête. Terminez la séance avant d’actualiser.'
+            : 'Mise à jour prête. Vous pouvez actualiser.';
+          button.disabled = active;
+        };
+        updateBanner();
+        window.setInterval(updateBanner, 1000);
+      };
+
       navigator.serviceWorker.addEventListener('controllerchange', function () {
         if (wasControlled && !reloading) {
-          reloading = true;
-          window.location.reload();
+          if (sessionIsActive()) {
+            showDeferredUpdate();
+          } else {
+            reloading = true;
+            window.location.reload();
+          }
         }
       });
 

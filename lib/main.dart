@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 
 import 'data/routine_store.dart';
+import 'data/session_store.dart';
 import 'design_system/app_colors.dart';
 import 'domain/routine.dart';
+import 'domain/session.dart';
 import 'features/onboarding/onboarding_page.dart';
+import 'features/session/session_page.dart';
 
 void main() => runApp(const PetitDepartApp());
 
 class PetitDepartApp extends StatelessWidget {
-  const PetitDepartApp({super.key, this.store, this.today});
+  const PetitDepartApp({super.key, this.store, this.sessionStore, this.today});
 
   final RoutineStore? store;
+  final SessionStore? sessionStore;
   final DateTime Function()? today;
 
   @override
@@ -75,6 +79,7 @@ class PetitDepartApp extends StatelessWidget {
       ),
       home: RoutineGate(
         store: store ?? LocalRoutineStore(),
+        sessionStore: sessionStore ?? LocalSessionStore(),
         today: today ?? DateTime.now,
       ),
     );
@@ -82,9 +87,15 @@ class PetitDepartApp extends StatelessWidget {
 }
 
 class RoutineGate extends StatefulWidget {
-  const RoutineGate({super.key, required this.store, required this.today});
+  const RoutineGate({
+    super.key,
+    required this.store,
+    required this.sessionStore,
+    required this.today,
+  });
 
   final RoutineStore store;
+  final SessionStore sessionStore;
   final DateTime Function() today;
 
   @override
@@ -93,8 +104,12 @@ class RoutineGate extends StatefulWidget {
 
 class _RoutineGateState extends State<RoutineGate> {
   Routine? routine;
+  SessionDraft? activeSession;
+  SessionRecord? lastRecord;
+  SessionRecord? summary;
   bool loading = true;
   bool failed = false;
+  bool starting = false;
 
   @override
   void initState() {
@@ -109,7 +124,15 @@ class _RoutineGateState extends State<RoutineGate> {
     });
     try {
       final saved = await widget.store.read();
-      if (mounted) setState(() => routine = saved);
+      final active = await widget.sessionStore.readActive();
+      final records = await widget.sessionStore.readRecords();
+      if (mounted) {
+        setState(() {
+          routine = saved;
+          activeSession = active;
+          lastRecord = records.isEmpty ? null : records.last;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => failed = true);
     } finally {
@@ -128,6 +151,47 @@ class _RoutineGateState extends State<RoutineGate> {
         builder: (_) => OnboardingPage(initialRoutine: routine, onSaved: save),
       ),
     );
+  }
+
+  Future<void> start() async {
+    if (starting || routine == null) return;
+    setState(() => starting = true);
+    try {
+      final draft = SessionDraft.start(routine!, DateTime.now());
+      await widget.sessionStore.writeActive(draft);
+      if (mounted) setState(() => activeSession = draft);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de démarrer la séance. Réessayez.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => starting = false);
+    }
+  }
+
+  void finish(SessionRecord record) {
+    setState(() {
+      activeSession = null;
+      lastRecord = record;
+      summary = record;
+    });
+  }
+
+  Future<void> setFeeling(String feeling) async {
+    final current = summary;
+    if (current == null) return;
+    final updated = current.withFeeling(feeling);
+    await widget.sessionStore.saveRecord(updated);
+    if (mounted) {
+      setState(() {
+        summary = updated;
+        lastRecord = updated;
+      });
+    }
   }
 
   @override
@@ -154,7 +218,30 @@ class _RoutineGateState extends State<RoutineGate> {
     }
     final saved = routine;
     if (saved == null) return OnboardingPage(onSaved: save);
-    return AppShell(routine: saved, today: widget.today, onEdit: edit);
+    final active = activeSession;
+    if (active != null) {
+      return SessionPage(
+        draft: active,
+        store: widget.sessionStore,
+        onFinished: finish,
+      );
+    }
+    final finished = summary;
+    if (finished != null) {
+      return SessionSummaryPage(
+        record: finished,
+        onFeeling: setFeeling,
+        onClose: () => setState(() => summary = null),
+      );
+    }
+    return AppShell(
+      routine: saved,
+      today: widget.today,
+      onEdit: edit,
+      onStart: start,
+      starting: starting,
+      lastRecord: lastRecord,
+    );
   }
 }
 
@@ -164,11 +251,17 @@ class AppShell extends StatefulWidget {
     required this.routine,
     required this.today,
     required this.onEdit,
+    required this.onStart,
+    required this.starting,
+    required this.lastRecord,
   });
 
   final Routine routine;
   final DateTime Function() today;
   final VoidCallback onEdit;
+  final VoidCallback onStart;
+  final bool starting;
+  final SessionRecord? lastRecord;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -184,6 +277,9 @@ class _AppShellState extends State<AppShell> {
         routine: widget.routine,
         today: widget.today(),
         onEdit: widget.onEdit,
+        onStart: widget.onStart,
+        starting: widget.starting,
+        lastRecord: widget.lastRecord,
       ),
       const PlaceholderPage(
         icon: Icons.fitness_center_rounded,
@@ -234,11 +330,17 @@ class TodayPage extends StatelessWidget {
     required this.routine,
     required this.today,
     required this.onEdit,
+    required this.onStart,
+    required this.starting,
+    required this.lastRecord,
   });
 
   final Routine routine;
   final DateTime today;
   final VoidCallback onEdit;
+  final VoidCallback onStart;
+  final bool starting;
+  final SessionRecord? lastRecord;
 
   @override
   Widget build(BuildContext context) {
@@ -370,19 +472,48 @@ class TodayPage extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => SessionPreviewPage(routine: routine),
-                ),
-              ),
+              onPressed: starting ? null : onStart,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(isRestDay ? 'Faire une petite séance' : 'Commencer'),
+              label: Text(
+                starting
+                    ? 'Préparation…'
+                    : isRestDay
+                    ? 'Faire une petite séance'
+                    : 'Commencer',
+              ),
             ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: onEdit,
               child: const Text('Adapter la séance'),
             ),
+            if (lastRecord != null) ...[
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Dernière séance', style: textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      Text(
+                        lastRecord!.outcome == SessionOutcome.completed
+                            ? 'Terminée'
+                            : 'Partielle',
+                      ),
+                      Text(
+                        'Temps actif : ${formatDuration(lastRecord!.activeMilliseconds)} · '
+                        'Répétitions : ${lastRecord!.repetitions}',
+                      ),
+                      Text(
+                        'Durée totale : ${formatDuration(lastRecord!.totalMilliseconds)}',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             const Center(
               child: Text(
@@ -432,63 +563,6 @@ class ExerciseRow extends StatelessWidget {
         ),
         Text(target, style: const TextStyle(color: AppColors.muted)),
       ],
-    );
-  }
-}
-
-class SessionPreviewPage extends StatelessWidget {
-  const SessionPreviewPage({super.key, required this.routine});
-
-  final Routine routine;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Votre séance')),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.play_circle_outline_rounded,
-                  size: 76,
-                  color: AppColors.accent,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Prêt à commencer ?',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  routine.steps
-                      .map((step) {
-                        final exercise = exerciseById(step.exerciseId);
-                        return '${exercise.name} : ${exercise.targetLabel(step.target)}';
-                      })
-                      .join('\n'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.muted, height: 1.7),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Le chronomètre et l’enregistrement des séances arrivent à la prochaine étape.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 28),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Retour à aujourd’hui'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

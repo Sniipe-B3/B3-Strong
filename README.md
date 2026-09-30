@@ -11,8 +11,10 @@ python3 -m http.server 8080 --bind 0.0.0.0 --directory build/web
 ```
 
 Ouvrir ensuite le port 8080 dans l'onglet **Ports** de VS Code. La routine choisie
-est enregistrée dans le navigateur. Le chronomètre et l'historique des séances
-ne sont pas encore implémentés.
+est enregistrée dans le navigateur. Une vraie séance propose préparation,
+chronomètre ou compteur manuel, pause, reprise, passage et arrêt. Une séance
+interrompue reste partielle. Le dernier résultat est visible sur « Aujourd’hui » ;
+l'historique complet dans l'onglet Progrès arrivera à une étape ultérieure.
 
 ## Publier sur Firebase Hosting
 
@@ -47,8 +49,16 @@ une nouvelle version est détectée, un onglet déjà ouvert se recharge tout se
 (immédiatement ou à son retour au premier plan). Il faut donc **compiler avant
 chaque déploiement**. Si le build est absent, le déploiement est annulé. La
 routine enregistrée dans le navigateur n'est pas effacée par cette mise à jour.
+Une mise à jour détectée pendant une séance attend sa fin et propose un bouton
+d'actualisation, pour ne pas interrompre l'exercice.
 Un onglet ouvert avant l'installation de ce mécanisme peut nécessiter un dernier
 rafraîchissement normal pour en bénéficier.
+
+Les données de routine et de séance sont locales au navigateur, pas synchronisées
+par Firebase Hosting. Effacer les données du site les supprimera. Le temps actif
+exclut préparation et pauses ; la durée totale comprend le temps passé sur la
+séance quand elle est ouverte, pauses comprises, mais pas la période où le site
+est fermé.
 
 Le navigateur doit visiter le site une première fois en ligne pour installer
 les fichiers nécessaires au mode hors connexion. Après cette visite, tester
