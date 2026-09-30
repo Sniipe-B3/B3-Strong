@@ -11,6 +11,13 @@ des icônes, un service worker et un hébergement HTTPS sur Firebase. L'accueil 
 été testé en ligne et hors connexion dans un navigateur automatisé. L'installation
 sur un téléphone réel reste à vérifier.
 
+Les nouvelles versions publiées sont maintenant détectées par la PWA : le
+service worker reçoit un identifiant de build différent lorsque les fichiers
+changent, puis un onglet ouvert recharge la nouvelle version. Le passage d'une
+version à l'autre et le démarrage hors connexion ont été vérifiés dans un
+navigateur automatisé. Un ancien onglet ouvert avant cette amélioration peut
+demander un dernier rafraîchissement.
+
 Le premier lancement permet maintenant de choisir une petite routine, ses
 objectifs et ses jours. Cette routine est enregistrée localement dans le
 navigateur, sans compte. L'écran « Aujourd'hui » la retrouve après un
@@ -49,6 +56,8 @@ et la reprise demandent des règles précises.
 - Enregistrer le temps actif, les répétitions et la durée totale séparément.
 - Conserver une séance interrompue comme partielle, avec le travail réellement
   effectué. Proposer un bilan facultatif à la fin.
+- Suspendre le rechargement automatique d'une mise à jour pendant une séance
+  active, puis proposer l'actualisation une fois les données sauvegardées.
 
 **Terminé quand :** les résultats restent exacts après pause, arrêt et
 rafraîchissement. Aucune répétition n'est comptée automatiquement et une séance
@@ -137,7 +146,8 @@ deux sujets distincts.
    et `flutter test`. Pour une étape Web, compiler avec
    `flutter build web --release --no-web-resources-cdn`.
 3. Tester le parcours concerné, puis déployer sur Firebase Hosting lorsque la
-   version est prête à être montrée.
+   version est prête à être montrée. Le hook `predeploy` versionne le service
+   worker à partir du build ; ne jamais déployer sans recompiler les nouveautés.
 4. Faire un **commit Git et un push sur GitHub** après l'étape terminée. Ne pas
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.

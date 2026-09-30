@@ -20,6 +20,8 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="PWA sportive pour commencer petit et construire une habitude durable.">
   <meta name="theme-color" content="#17191B">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="Petit départ">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -45,8 +47,34 @@
   <script src="flutter_bootstrap.js" async></script>
   <script>
     if ('serviceWorker' in navigator) {
+      // Do not reload on first installation: this page already has fresh files.
+      const wasControlled = Boolean(navigator.serviceWorker.controller);
+      let reloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (wasControlled && !reloading) {
+          reloading = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register('pwa_service_worker.js', { scope: './' })
+        navigator.serviceWorker.register('pwa_service_worker.js', {
+          scope: './',
+          updateViaCache: 'none'
+        })
+          .then(function (registration) {
+            // Browsers check on navigation; also check tabs left open for days.
+            const checkForUpdates = function () {
+              if (!document.hidden && navigator.onLine) {
+                registration.update().catch(function (error) {
+                  console.warn('Vérification de mise à jour indisponible', error);
+                });
+              }
+            };
+            document.addEventListener('visibilitychange', checkForUpdates);
+            window.addEventListener('online', checkForUpdates);
+            window.setInterval(checkForUpdates, 5 * 60 * 1000);
+          })
           .catch(function (error) { console.warn('Cache hors connexion indisponible', error); });
       });
     }

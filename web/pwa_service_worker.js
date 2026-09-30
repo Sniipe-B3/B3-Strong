@@ -1,6 +1,8 @@
 // Cache the small app shell so the installed app can open without a connection.
 // Fetches remain network-first, allowing new deployments to replace cached files.
-const CACHE_NAME = 'petit-depart-shell-v1';
+// The Firebase predeploy hook replaces this build ID with a content hash.
+// A new worker is then installed whenever the published app changes.
+const CACHE_NAME = 'petit-depart-shell-__APP_BUILD_ID__';
 const BASE_URL = new URL('./', self.registration.scope);
 const SHELL_FILES = [
   '',

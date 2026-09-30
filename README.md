@@ -41,6 +41,15 @@ La configuration [firebase.json](firebase.json) sert le dossier `build/web` et
 renvoie les routes inconnues vers `index.html`. Le site est accessible à
 https://b3-strong.web.app après le déploiement.
 
+Le déploiement lance automatiquement `scripts/prepare_hosting.mjs` : il donne
+au service worker un identifiant calculé à partir des fichiers du build. Quand
+une nouvelle version est détectée, un onglet déjà ouvert se recharge tout seul
+(immédiatement ou à son retour au premier plan). Il faut donc **compiler avant
+chaque déploiement**. Si le build est absent, le déploiement est annulé. La
+routine enregistrée dans le navigateur n'est pas effacée par cette mise à jour.
+Un onglet ouvert avant l'installation de ce mécanisme peut nécessiter un dernier
+rafraîchissement normal pour en bénéficier.
+
 Le navigateur doit visiter le site une première fois en ligne pour installer
 les fichiers nécessaires au mode hors connexion. Après cette visite, tester
 l'installation et le démarrage hors connexion sur un téléphone compatible.
