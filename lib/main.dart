@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 
+import 'data/routine_store.dart';
+import 'design_system/app_colors.dart';
+import 'domain/routine.dart';
+import 'features/onboarding/onboarding_page.dart';
+
 void main() => runApp(const PetitDepartApp());
 
-class AppColors {
-  static const background = Color(0xFF17191B);
-  static const surface = Color(0xFF24272A);
-  static const raised = Color(0xFF303438);
-  static const text = Color(0xFFF3F0E7);
-  static const muted = Color(0xFFB8B9B5);
-  static const accent = Color(0xFFF4CC46);
-}
-
 class PetitDepartApp extends StatelessWidget {
-  const PetitDepartApp({super.key});
+  const PetitDepartApp({super.key, this.store, this.today});
+
+  final RoutineStore? store;
+  final DateTime Function()? today;
 
   @override
   Widget build(BuildContext context) {
@@ -74,13 +73,102 @@ class PetitDepartApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AppShell(),
+      home: RoutineGate(
+        store: store ?? LocalRoutineStore(),
+        today: today ?? DateTime.now,
+      ),
     );
   }
 }
 
+class RoutineGate extends StatefulWidget {
+  const RoutineGate({super.key, required this.store, required this.today});
+
+  final RoutineStore store;
+  final DateTime Function() today;
+
+  @override
+  State<RoutineGate> createState() => _RoutineGateState();
+}
+
+class _RoutineGateState extends State<RoutineGate> {
+  Routine? routine;
+  bool loading = true;
+  bool failed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    setState(() {
+      loading = true;
+      failed = false;
+    });
+    try {
+      final saved = await widget.store.read();
+      if (mounted) setState(() => routine = saved);
+    } catch (_) {
+      if (mounted) setState(() => failed = true);
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> save(Routine next) async {
+    await widget.store.write(next);
+    if (mounted) setState(() => routine = next);
+  }
+
+  Future<void> edit() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => OnboardingPage(initialRoutine: routine, onSaved: save),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (failed) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Impossible de lire votre routine enregistrée.'),
+                const SizedBox(height: 16),
+                FilledButton(onPressed: load, child: const Text('Réessayer')),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    final saved = routine;
+    if (saved == null) return OnboardingPage(onSaved: save);
+    return AppShell(routine: saved, today: widget.today, onEdit: edit);
+  }
+}
+
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({
+    super.key,
+    required this.routine,
+    required this.today,
+    required this.onEdit,
+  });
+
+  final Routine routine;
+  final DateTime Function() today;
+  final VoidCallback onEdit;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -92,7 +180,11 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      const TodayPage(),
+      TodayPage(
+        routine: widget.routine,
+        today: widget.today(),
+        onEdit: widget.onEdit,
+      ),
       const PlaceholderPage(
         icon: Icons.fitness_center_rounded,
         title: 'Exercices',
@@ -137,11 +229,22 @@ class _AppShellState extends State<AppShell> {
 }
 
 class TodayPage extends StatelessWidget {
-  const TodayPage({super.key});
+  const TodayPage({
+    super.key,
+    required this.routine,
+    required this.today,
+    required this.onEdit,
+  });
+
+  final Routine routine;
+  final DateTime today;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final isRestDay = !routine.isScheduledOn(today);
+    final estimateMinutes = (routine.estimatedTimedSeconds / 60).ceil();
 
     return Center(
       child: ConstrainedBox(
@@ -181,7 +284,9 @@ class TodayPage extends StatelessWidget {
             Text('Aujourd’hui', style: textTheme.headlineLarge),
             const SizedBox(height: 10),
             Text(
-              'Quelques secondes suffisent pour commencer.',
+              isRestDay
+                  ? 'Aujourd’hui est un jour de repos. À vous de choisir.'
+                  : 'Quelques secondes suffisent pour commencer.',
               style: textTheme.bodyLarge?.copyWith(color: AppColors.muted),
             ),
             const SizedBox(height: 28),
@@ -201,9 +306,9 @@ class TodayPage extends StatelessWidget {
                         color: AppColors.raised,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        'ROUTINE DE DÉCOUVERTE',
-                        style: TextStyle(
+                      child: Text(
+                        isRestDay ? 'JOUR DE REPOS' : 'VOTRE ROUTINE',
+                        style: const TextStyle(
                           color: AppColors.accent,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -212,31 +317,51 @@ class TodayPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    Text('Un tout petit pas', style: textTheme.headlineSmall),
+                    Text(
+                      isRestDay ? 'Le repos compte aussi' : 'Votre petit pas',
+                      style: textTheme.headlineSmall,
+                    ),
                     const SizedBox(height: 6),
-                    const Text('Un exemple pour découvrir l’application.'),
-                    const SizedBox(height: 22),
-                    const ExerciseRow(
-                      icon: Icons.accessibility_new_rounded,
-                      title: 'Planche',
-                      target: '10 secondes',
-                    ),
-                    const Divider(height: 26),
-                    const ExerciseRow(
-                      icon: Icons.directions_walk_rounded,
-                      title: 'Squats',
-                      target: '2 répétitions',
+                    Text(
+                      isRestDay
+                          ? 'Vous pouvez tout de même faire une petite séance si vous en avez envie.'
+                          : 'Votre objectif, à votre rythme.',
                     ),
                     const SizedBox(height: 22),
-                    const Row(
+                    for (
+                      var index = 0;
+                      index < routine.steps.length;
+                      index++
+                    ) ...[
+                      if (index > 0) const Divider(height: 26),
+                      ExerciseRow(
+                        icon: switch (routine.steps[index].exerciseId) {
+                          'plank' => Icons.accessibility_new_rounded,
+                          'squat' => Icons.directions_walk_rounded,
+                          _ => Icons.directions_run_rounded,
+                        },
+                        title: exerciseById(routine.steps[index].exerciseId)
+                            .name,
+                        target: exerciseById(routine.steps[index].exerciseId)
+                            .targetLabel(routine.steps[index].target),
+                      ),
+                    ],
+                    const SizedBox(height: 22),
+                    Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.schedule_rounded,
                           size: 18,
                           color: AppColors.muted,
                         ),
-                        SizedBox(width: 8),
-                        Text('Durée estimée : moins de 2 min'),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            routine.hasRepetitions
+                                ? 'Durée estimée : variable selon votre rythme'
+                                : 'Durée estimée : environ $estimateMinutes min',
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -247,22 +372,15 @@ class TodayPage extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const SessionPreviewPage(),
+                  builder: (_) => SessionPreviewPage(routine: routine),
                 ),
               ),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Commencer'),
+              label: Text(isRestDay ? 'Faire une petite séance' : 'Commencer'),
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const InfoPage(
-                    title: 'Adapter la séance',
-                    message: 'Vous pourrez bientôt choisir vos exercices et vos objectifs.',
-                  ),
-                ),
-              ),
+              onPressed: onEdit,
               child: const Text('Adapter la séance'),
             ),
             const SizedBox(height: 20),
@@ -319,7 +437,9 @@ class ExerciseRow extends StatelessWidget {
 }
 
 class SessionPreviewPage extends StatelessWidget {
-  const SessionPreviewPage({super.key});
+  const SessionPreviewPage({super.key, required this.routine});
+
+  final Routine routine;
 
   @override
   Widget build(BuildContext context) {
@@ -344,10 +464,15 @@ class SessionPreviewPage extends StatelessWidget {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Planche : 10 secondes\nSquats : 2 répétitions',
+                Text(
+                  routine.steps
+                      .map((step) {
+                        final exercise = exerciseById(step.exerciseId);
+                        return '${exercise.name} : ${exercise.targetLabel(step.target)}';
+                      })
+                      .join('\n'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.muted, height: 1.7),
+                  style: const TextStyle(color: AppColors.muted, height: 1.7),
                 ),
                 const SizedBox(height: 16),
                 const Text(

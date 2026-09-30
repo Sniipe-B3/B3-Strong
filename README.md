@@ -10,8 +10,9 @@ flutter build web --release --no-web-resources-cdn
 python3 -m http.server 8080 --bind 0.0.0.0 --directory build/web
 ```
 
-Ouvrir ensuite le port 8080 dans l'onglet **Ports** de VS Code. Les données de
-séance et la personnalisation ne sont pas encore implémentées.
+Ouvrir ensuite le port 8080 dans l'onglet **Ports** de VS Code. La routine choisie
+est enregistrée dans le navigateur. Le chronomètre et l'historique des séances
+ne sont pas encore implémentés.
 
 ## Publier sur Firebase Hosting
 
