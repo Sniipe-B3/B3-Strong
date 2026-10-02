@@ -33,6 +33,11 @@ gardent les objectifs qui étaient en vigueur au moment où elles ont commencé.
 L'onglet Progrès affiche les séances de la semaine, les jours réellement actifs,
 les durées et répétitions séparées, l'historique et de petits jalons sans série
 de jours à préserver.
+Un bilan facultatif apparaît après une période choisie de 7, 14 ou 28 jours
+(sept par défaut) à partir d'une séance enregistrée. Chaque exercice peut être
+gardé, légèrement augmenté, réduit ou reporté indépendamment. Un aperçu montre
+les valeurs avant et après ; seule la prochaine routine change après confirmation.
+Le rythme et la date du dernier bilan restent dans le navigateur, sans compte.
 
 ## Ordre de travail
 
@@ -104,6 +109,8 @@ le repos et les interruptions ne provoquent aucun message culpabilisant.
 
 ### 5. Bilan et progression choisie
 
+**Statut : terminé et vérifié par tests ; déployé sur Firebase Hosting.**
+
 **Modèle conseillé : GPT-6.1 Sol, niveau High.**
 
 - Après une période configurable, proposer pour chaque exercice : garder,
@@ -167,4 +174,4 @@ deux sujets distincts.
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.
 
-La prochaine étape de développement est **5. Bilan et progression choisie**.
+La prochaine étape de développement est **6. Catalogue et qualité des contenus**.

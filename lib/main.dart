@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
 
 import 'data/routine_store.dart';
+import 'data/review_store.dart';
 import 'data/session_store.dart';
 import 'design_system/app_colors.dart';
 import 'domain/routine.dart';
+import 'domain/review.dart';
 import 'domain/session.dart';
 import 'features/onboarding/onboarding_page.dart';
 import 'features/progress/progress_page.dart';
 import 'features/routine/routine_editor_page.dart';
+import 'features/review/review_page.dart';
 import 'features/session/session_page.dart';
 
 void main() => runApp(const PetitDepartApp());
 
 class PetitDepartApp extends StatelessWidget {
-  const PetitDepartApp({super.key, this.store, this.sessionStore, this.today});
+  const PetitDepartApp({
+    super.key,
+    this.store,
+    this.sessionStore,
+    this.reviewStore,
+    this.today,
+  });
 
   final RoutineStore? store;
   final SessionStore? sessionStore;
+  final ReviewStore? reviewStore;
   final DateTime Function()? today;
 
   @override
@@ -82,6 +92,7 @@ class PetitDepartApp extends StatelessWidget {
       home: RoutineGate(
         store: store ?? LocalRoutineStore(),
         sessionStore: sessionStore ?? LocalSessionStore(),
+        reviewStore: reviewStore ?? LocalReviewStore(),
         today: today ?? DateTime.now,
       ),
     );
@@ -93,11 +104,13 @@ class RoutineGate extends StatefulWidget {
     super.key,
     required this.store,
     required this.sessionStore,
+    required this.reviewStore,
     required this.today,
   });
 
   final RoutineStore store;
   final SessionStore sessionStore;
+  final ReviewStore reviewStore;
   final DateTime Function() today;
 
   @override
@@ -109,6 +122,7 @@ class _RoutineGateState extends State<RoutineGate> {
   SessionDraft? activeSession;
   SessionRecord? lastRecord;
   List<SessionRecord> records = [];
+  ReviewSettings reviewSettings = const ReviewSettings();
   SessionRecord? summary;
   bool loading = true;
   bool failed = false;
@@ -129,11 +143,13 @@ class _RoutineGateState extends State<RoutineGate> {
       final saved = await widget.store.read();
       final active = await widget.sessionStore.readActive();
       final records = await widget.sessionStore.readRecords();
+      final reviewSettings = await widget.reviewStore.read();
       if (mounted) {
         setState(() {
           routine = saved;
           activeSession = active;
           this.records = List.of(records);
+          this.reviewSettings = reviewSettings;
           lastRecord = records.isEmpty
               ? null
               : (List<SessionRecord>.of(
@@ -158,6 +174,44 @@ class _RoutineGateState extends State<RoutineGate> {
       MaterialPageRoute<void>(
         builder: (_) =>
             RoutineEditorPage(initialRoutine: routine!, onSaved: save),
+      ),
+    );
+  }
+
+  Future<void> changeReviewPeriod(int days) async {
+    final next = reviewSettings.copyWith(periodDays: days);
+    await widget.reviewStore.write(next);
+    if (mounted) setState(() => reviewSettings = next);
+  }
+
+  Future<void> saveReview(Routine next) async {
+    await widget.store.write(next);
+    final latest = records.fold<DateTime?>(null, (current, record) {
+      return current == null || record.endedAt.isAfter(current)
+          ? record.endedAt
+          : current;
+    });
+    final now = widget.today();
+    final reviewedAt = latest != null && latest.isAfter(now) ? latest : now;
+    final settings = reviewSettings.copyWith(lastReviewedAt: reviewedAt);
+    await widget.reviewStore.write(settings);
+    if (mounted) {
+      setState(() {
+        routine = next;
+        reviewSettings = settings;
+      });
+    }
+  }
+
+  Future<void> review() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ReviewPage(
+          initialRoutine: routine!,
+          settings: reviewSettings,
+          onPeriodChanged: changeReviewPeriod,
+          onSaved: saveReview,
+        ),
       ),
     );
   }
@@ -255,10 +309,12 @@ class _RoutineGateState extends State<RoutineGate> {
       routine: saved,
       today: widget.today,
       onEdit: edit,
+      onReview: review,
       onStart: start,
       starting: starting,
       lastRecord: lastRecord,
       records: records,
+      reviewSettings: reviewSettings,
     );
   }
 }
@@ -269,19 +325,23 @@ class AppShell extends StatefulWidget {
     required this.routine,
     required this.today,
     required this.onEdit,
+    required this.onReview,
     required this.onStart,
     required this.starting,
     required this.lastRecord,
     required this.records,
+    required this.reviewSettings,
   });
 
   final Routine routine;
   final DateTime Function() today;
   final VoidCallback onEdit;
+  final VoidCallback onReview;
   final VoidCallback onStart;
   final bool starting;
   final SessionRecord? lastRecord;
   final List<SessionRecord> records;
+  final ReviewSettings reviewSettings;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -297,9 +357,14 @@ class _AppShellState extends State<AppShell> {
         routine: widget.routine,
         today: widget.today(),
         onEdit: widget.onEdit,
+        onReview: widget.onReview,
         onStart: widget.onStart,
         starting: widget.starting,
         lastRecord: widget.lastRecord,
+        reviewSchedule: ReviewSchedule.fromRecords(
+          widget.records,
+          widget.reviewSettings,
+        ),
       ),
       const PlaceholderPage(
         icon: Icons.fitness_center_rounded,
@@ -346,17 +411,21 @@ class TodayPage extends StatelessWidget {
     required this.routine,
     required this.today,
     required this.onEdit,
+    required this.onReview,
     required this.onStart,
     required this.starting,
     required this.lastRecord,
+    required this.reviewSchedule,
   });
 
   final Routine routine;
   final DateTime today;
   final VoidCallback onEdit;
+  final VoidCallback onReview;
   final VoidCallback onStart;
   final bool starting;
   final SessionRecord? lastRecord;
+  final ReviewSchedule reviewSchedule;
 
   @override
   Widget build(BuildContext context) {
@@ -505,6 +574,37 @@ class TodayPage extends StatelessWidget {
               onPressed: onEdit,
               child: const Text('Adapter la séance'),
             ),
+            if (lastRecord != null) ...[
+              const SizedBox(height: 10),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reviewSchedule.isDue(today)
+                            ? 'Un bilan, si vous en avez envie'
+                            : 'Votre bilan, à votre rythme',
+                        style: textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        reviewSchedule.isDue(today)
+                            ? 'La période choisie est passée. À vous de décider pour chaque exercice.'
+                            : 'Vous pouvez ajuster vos objectifs quand vous le souhaitez.',
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: onReview,
+                        icon: const Icon(Icons.tune_rounded),
+                        label: const Text('Faire mon bilan'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             if (lastRecord != null) ...[
               const SizedBox(height: 16),
               Card(

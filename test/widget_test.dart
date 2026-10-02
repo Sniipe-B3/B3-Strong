@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:petit_depart/data/routine_store.dart';
+import 'package:petit_depart/data/review_store.dart';
 import 'package:petit_depart/data/session_store.dart';
 import 'package:petit_depart/domain/routine.dart';
+import 'package:petit_depart/domain/review.dart';
 import 'package:petit_depart/domain/session.dart';
 import 'package:petit_depart/main.dart';
 
@@ -42,15 +44,31 @@ class MemorySessionStore implements SessionStore {
   }
 }
 
+class MemoryReviewStore implements ReviewStore {
+  ReviewSettings settings = const ReviewSettings();
+
+  @override
+  Future<ReviewSettings> read() async => settings;
+
+  @override
+  Future<void> write(ReviewSettings value) async => settings = value;
+}
+
 void main() {
   testWidgets('Une routine choisie reste disponible au redémarrage', (
     tester,
   ) async {
     final store = MemoryRoutineStore();
     final sessionStore = MemorySessionStore();
+    final reviewStore = MemoryReviewStore();
     DateTime today() => DateTime(2026, 9, 28); // lundi
     await tester.pumpWidget(
-      PetitDepartApp(store: store, sessionStore: sessionStore, today: today),
+      PetitDepartApp(
+        store: store,
+        sessionStore: sessionStore,
+        reviewStore: reviewStore,
+        today: today,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -74,7 +92,12 @@ void main() {
     expect(find.text('15 secondes'), findsOneWidget);
 
     await tester.pumpWidget(
-      PetitDepartApp(store: store, sessionStore: sessionStore, today: today),
+      PetitDepartApp(
+        store: store,
+        sessionStore: sessionStore,
+        reviewStore: reviewStore,
+        today: today,
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Votre petit pas'), findsOneWidget);
@@ -111,6 +134,7 @@ void main() {
       PetitDepartApp(
         store: store,
         sessionStore: MemorySessionStore(),
+        reviewStore: MemoryReviewStore(),
         today: () => DateTime(2026, 9, 29), // mardi
       ),
     );
@@ -137,6 +161,7 @@ void main() {
       PetitDepartApp(
         store: routineStore,
         sessionStore: sessions,
+        reviewStore: MemoryReviewStore(),
         today: () => DateTime(2026, 9, 30),
       ),
     );
@@ -163,6 +188,7 @@ void main() {
       PetitDepartApp(
         store: routineStore,
         sessionStore: sessions,
+        reviewStore: MemoryReviewStore(),
         today: () => DateTime(2026, 9, 30),
       ),
     );
@@ -202,6 +228,7 @@ void main() {
       PetitDepartApp(
         store: routineStore,
         sessionStore: sessions,
+        reviewStore: MemoryReviewStore(),
         today: () => DateTime(2026, 10, 2),
       ),
     );
@@ -213,5 +240,65 @@ void main() {
     expect(find.text('1'), findsWidgets);
     await tester.scrollUntilVisible(find.text('02/10/2026'), 200);
     expect(find.text('Terminée'), findsOneWidget);
+  });
+
+  testWidgets('Bilan proposé, sauvegardé, sans changer les séances passées', (
+    tester,
+  ) async {
+    final routineStore = MemoryRoutineStore()
+      ..routine = const Routine(
+        steps: [RoutineStep(exerciseId: 'plank', target: 10)],
+        weekdays: {DateTime.friday},
+      );
+    final sessions = MemorySessionStore();
+    final previous = SessionRecord(
+      id: 'old',
+      startedAt: DateTime(2026, 9, 25, 9),
+      endedAt: DateTime(2026, 9, 25, 9, 1),
+      outcome: SessionOutcome.completed,
+      totalMilliseconds: 60000,
+      steps: const [
+        StepResult(
+          exerciseId: 'plank',
+          target: 10,
+          activeMilliseconds: 10000,
+          repetitions: 0,
+          outcome: StepOutcome.completed,
+          easierVariant: false,
+        ),
+      ],
+    );
+    sessions.records.add(previous);
+    final reviewStore = MemoryReviewStore();
+    Widget app() => PetitDepartApp(
+      store: routineStore,
+      sessionStore: sessions,
+      reviewStore: reviewStore,
+      today: () => DateTime(2026, 10, 2, 12),
+    );
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Faire mon bilan'), 180);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -200));
+    await tester.pumpAndSettle();
+    expect(find.text('Un bilan, si vous en avez envie'), findsOneWidget);
+    await tester.tap(find.text('Faire mon bilan'));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byTooltip('Augmenter Planche'), 180);
+    await tester.drag(find.byType(ListView), const Offset(0, -120));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Augmenter Planche'));
+    await tester.tap(find.text('Voir mon choix'));
+    await tester.pumpAndSettle();
+    expect(routineStore.routine!.steps.single.target, 10);
+    await tester.tap(find.text('Confirmer mon bilan'));
+    await tester.pumpAndSettle();
+    expect(routineStore.routine!.steps.single.target, 15);
+    expect(sessions.records.single.steps.single.target, 10);
+    expect(reviewStore.settings.lastReviewedAt, isNotNull);
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Faire mon bilan'), 180);
+    expect(find.text('Votre bilan, à votre rythme'), findsOneWidget);
   });
 }

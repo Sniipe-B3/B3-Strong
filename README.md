@@ -20,6 +20,10 @@ Le bouton « Adapter la séance » permet d'ajouter, retirer et réordonner les
 exercices, d'ajuster objectifs, séries, repos et jours, puis de vérifier les
 changements avant de les enregistrer. Les anciennes séances gardent leurs
 objectifs d'origine.
+Après une période réglable de 7, 14 ou 28 jours, « Faire mon bilan » permet de
+garder, augmenter légèrement, réduire ou reporter chaque exercice séparément.
+Un aperçu affiche les objectifs avant/après. Le bilan n'applique rien sans
+confirmation et ne modifie jamais l'historique ; on peut aussi le faire plus tôt.
 
 ## Publier sur Firebase Hosting
 
@@ -59,7 +63,7 @@ d'actualisation, pour ne pas interrompre l'exercice.
 Un onglet ouvert avant l'installation de ce mécanisme peut nécessiter un dernier
 rafraîchissement normal pour en bénéficier.
 
-Les données de routine et de séance sont locales au navigateur, pas synchronisées
+Les données de routine, de séance et de bilan sont locales au navigateur, pas synchronisées
 par Firebase Hosting. Effacer les données du site les supprimera. Le temps actif
 exclut préparation et pauses ; la durée totale comprend le temps passé sur la
 séance quand elle est ouverte, pauses comprises, mais pas la période où le site
