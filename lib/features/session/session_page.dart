@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/session_store.dart';
 import '../../design_system/app_colors.dart';
+import '../../domain/exercise_content.dart';
 import '../../domain/routine.dart';
 import '../../domain/session.dart';
 
@@ -159,11 +160,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
   }
 
   String get _easierInstruction =>
-      switch (widget.draft.currentStep.exerciseId) {
-        'plank' => 'Vous pouvez poser les genoux au sol.',
-        'squat' => 'Vous pouvez réduire l’amplitude du mouvement.',
-        _ => 'Vous pouvez ralentir et faire un côté à la fois.',
-      };
+      guideById(widget.draft.currentStep.exerciseId).easierVariant;
 
   @override
   Widget build(BuildContext context) {
@@ -198,6 +195,11 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                 const SizedBox(height: 8),
                 Text(
                   'Objectif : ${exercise.targetLabel(draft.currentStep.target)}',
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  guideById(exercise.id).instructions.first,
+                  style: const TextStyle(color: AppColors.muted),
                 ),
                 const SizedBox(height: 22),
                 Card(

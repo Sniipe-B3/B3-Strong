@@ -25,6 +25,26 @@ const exerciseCatalog = <ExerciseSpec>[
     ExerciseUnit.repetitions,
     2,
   ),
+  ExerciseSpec('wall_pushup', 'Pompes au mur', ExerciseUnit.repetitions, 2),
+  ExerciseSpec('glute_bridge', 'Pont fessier', ExerciseUnit.repetitions, 2),
+  ExerciseSpec(
+    'calf_raise',
+    'Montées sur pointes',
+    ExerciseUnit.repetitions,
+    2,
+  ),
+  ExerciseSpec(
+    'shoulder_circle',
+    'Cercles d’épaules',
+    ExerciseUnit.repetitions,
+    2,
+  ),
+  ExerciseSpec(
+    'neck_rotation',
+    'Rotation douce du cou',
+    ExerciseUnit.repetitions,
+    2,
+  ),
 ];
 
 ExerciseSpec exerciseById(String id) => exerciseCatalog.firstWhere(

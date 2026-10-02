@@ -25,14 +25,19 @@ mise en pause, reprise, passée ou arrêtée. Les résultats, y compris partiels
 sont sauvegardés localement ; le dernier apparaît sur « Aujourd'hui » après un
 rechargement. Une séance interrompue par le navigateur revient en pause, sans
 compter le temps passé hors de l'application. Une mise à jour de la PWA attend
-la fin d'une séance avant de proposer l'actualisation. L'onglet Exercices reste
-un écran d'attente.
+la fin d'une séance avant de proposer l'actualisation.
 La routine peut maintenant être modifiée exercice par exercice, avec séries,
 repos et jours, après un aperçu avant confirmation. Les anciennes séances
 gardent les objectifs qui étaient en vigueur au moment où elles ont commencé.
 L'onglet Progrès affiche les séances de la semaine, les jours réellement actifs,
 les durées et répétitions séparées, l'historique et de petits jalons sans série
 de jours à préserver.
+L'onglet Exercices propose maintenant des fiches sourcées et illustrées pour
+renforcement, mouvement doux, mobilité et étirement. Huit mouvements sont
+disponibles dans la routine ; l'étirement du mollet reste informatif, car le
+chronomètre ne suit pas encore chaque côté séparément. Une fiche prudente sur
+la course à pied complète le catalogue. Les sources sont dans
+[SOURCES_CONTENUS_SPORTIFS.md](SOURCES_CONTENUS_SPORTIFS.md).
 Un bilan facultatif apparaît après une période choisie de 7, 14 ou 28 jours
 (sept par défaut) à partir d'une séance enregistrée. Chaque exercice peut être
 gardé, légèrement augmenté, réduit ou reporté indépendamment. Un aperçu montre
@@ -123,6 +128,8 @@ exercice et reporter laisse le programme inchangé.
 
 ### 6. Catalogue et qualité des contenus
 
+**Statut : terminé et vérifié par tests ; déployé sur Firebase Hosting.**
+
 **Modèle conseillé : GPT-6.1 Sol, niveau High** pour la vérification des sources.
 
 - Compléter un petit catalogue : planche, squats, pompes adaptées, jumping jack
@@ -174,4 +181,4 @@ deux sujets distincts.
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.
 
-La prochaine étape de développement est **6. Catalogue et qualité des contenus**.
+La prochaine étape de développement est **7. Vérification de la PWA sur appareils réels**.

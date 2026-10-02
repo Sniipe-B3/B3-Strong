@@ -8,6 +8,7 @@ import 'domain/routine.dart';
 import 'domain/review.dart';
 import 'domain/session.dart';
 import 'features/onboarding/onboarding_page.dart';
+import 'features/exercises/exercise_catalog_page.dart';
 import 'features/progress/progress_page.dart';
 import 'features/routine/routine_editor_page.dart';
 import 'features/review/review_page.dart';
@@ -366,11 +367,7 @@ class _AppShellState extends State<AppShell> {
           widget.reviewSettings,
         ),
       ),
-      const PlaceholderPage(
-        icon: Icons.fitness_center_rounded,
-        title: 'Exercices',
-        message: 'Le catalogue d’exercices arrive à une prochaine étape.',
-      ),
+      ExerciseCatalogPage(onEditRoutine: widget.onEdit),
       ProgressPage(records: widget.records, now: widget.today()),
     ];
 
@@ -525,7 +522,11 @@ class TodayPage extends StatelessWidget {
                         icon: switch (routine.steps[index].exerciseId) {
                           'plank' => Icons.accessibility_new_rounded,
                           'squat' => Icons.directions_walk_rounded,
-                          _ => Icons.directions_run_rounded,
+                          'step_jack' => Icons.directions_run_rounded,
+                          'wall_pushup' => Icons.pan_tool_alt_rounded,
+                          'glute_bridge' => Icons.self_improvement_rounded,
+                          'calf_raise' => Icons.height_rounded,
+                          _ => Icons.sync_rounded,
                         },
                         title: exerciseById(routine.steps[index].exerciseId)
                             .name,
