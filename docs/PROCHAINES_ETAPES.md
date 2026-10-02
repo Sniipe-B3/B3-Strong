@@ -148,6 +148,12 @@ signalé comme non vérifié ; les fiches sont compréhensibles sur mobile.
 
 ### 7. Vérification de la PWA sur appareils réels
 
+**Statut : en cours.** Le contrôle Chromium en 390 × 844 pixels confirme le
+manifeste, le service worker et le rechargement hors connexion de la version
+publiée. Les essais sur les appareils de l'utilisateur restent à faire avec
+la [fiche de test](TEST_APPAREILS_REELS.md) ; ne pas marquer cette étape terminée
+avant leurs résultats.
+
 **Modèle conseillé : GPT-6.1 Sol, niveau Medium.**
 
 - Ouvrir le site sur Android et, si disponible, sur iPhone.
@@ -185,4 +191,4 @@ deux sujets distincts.
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.
 
-La prochaine étape de développement est **7. Vérification de la PWA sur appareils réels**.
+La prochaine action est **7. Recevoir les résultats des tests sur appareils réels et corriger les problèmes constatés**.

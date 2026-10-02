@@ -79,6 +79,9 @@ mais ne compte pas comme jour actif.
 Le navigateur doit visiter le site une première fois en ligne pour installer
 les fichiers nécessaires au mode hors connexion. Après cette visite, tester
 l'installation et le démarrage hors connexion sur un téléphone compatible.
+La [fiche de test sur appareils réels](docs/TEST_APPAREILS_REELS.md) détaille
+les vérifications sur Android, iPhone et l'ancien MacBook Air, sans considérer
+un test automatisé comme une preuve de compatibilité sur ces appareils.
 
 Voir [le guide complet](docs/GUIDE_PROJET_DE_A_A_Z.md) pour la suite du projet.
 La [feuille de route](docs/PROCHAINES_ETAPES.md) indique l'étape suivante et les
