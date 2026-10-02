@@ -85,18 +85,18 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Adapter la séance'));
     await tester.pumpAndSettle();
-    expect(find.text('Votre premier mouvement'), findsOneWidget);
-    await tester.tap(find.text('Squats').first);
-    await tester.tap(find.text('Continuer'));
+    expect(find.text('Votre prochaine séance'), findsOneWidget);
+    await tester.tap(find.byTooltip('Augmenter objectif Planche'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Continuer'));
+    expect(store.routine!.steps.first.target, 15);
+    await tester.tap(find.text('Voir les changements'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tous les jours'));
-    await tester.tap(find.text('Commencer'));
+    expect(find.text('Vérifier la routine'), findsOneWidget);
+    await tester.tap(find.text('Enregistrer la routine'));
     await tester.pumpAndSettle();
-    expect(store.routine!.steps.single.exerciseId, 'squat');
-    expect(store.routine!.weekdays.length, 7);
-    expect(find.text('Squats'), findsOneWidget);
+    expect(store.routine!.steps.first.target, 20);
+    expect(store.routine!.steps.length, 3);
+    expect(find.text('20 secondes'), findsOneWidget);
   });
 
   testWidgets('Un jour de repos garde une séance volontaire disponible', (

@@ -27,6 +27,9 @@ rechargement. Une séance interrompue par le navigateur revient en pause, sans
 compter le temps passé hors de l'application. Une mise à jour de la PWA attend
 la fin d'une séance avant de proposer l'actualisation. Les onglets Exercices et
 Progrès restent des écrans d'attente : l'historique complet viendra plus tard.
+La routine peut maintenant être modifiée exercice par exercice, avec séries,
+repos et jours, après un aperçu avant confirmation. Les anciennes séances
+gardent les objectifs qui étaient en vigueur au moment où elles ont commencé.
 
 ## Ordre de travail
 
@@ -69,6 +72,8 @@ rafraîchissement. Aucune répétition n'est comptée automatiquement et une sé
 partielle n'est jamais affichée comme terminée.
 
 ### 3. Modifier sa routine
+
+**Statut : terminé et vérifié par tests ; déployé sur Firebase Hosting.**
 
 **Modèle conseillé : GPT-6.1 Sol, niveau Medium.**
 
@@ -157,4 +162,4 @@ deux sujets distincts.
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.
 
-La prochaine étape de développement est **3. Modifier sa routine**.
+La prochaine étape de développement est **4. Progrès simples et reprise sereine**.

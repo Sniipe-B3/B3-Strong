@@ -190,7 +190,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
               padding: const EdgeInsets.fromLTRB(22, 18, 22, 28),
               children: [
                 Text(
-                  'Exercice ${draft.index + 1} sur ${draft.steps.length}',
+                  'Étape ${draft.index + 1} sur ${draft.steps.length}',
                   style: const TextStyle(color: AppColors.accent),
                 ),
                 const SizedBox(height: 12),
@@ -212,6 +212,7 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                                   SessionPhase.preparation => 'PRÉPAREZ-VOUS',
                                   SessionPhase.timed => 'C’EST PARTI',
                                   SessionPhase.repetitions => 'À VOTRE RYTHME',
+                                  SessionPhase.rest => 'REPOS',
                                   SessionPhase.finished => 'TERMINÉ',
                                 },
                           style: const TextStyle(
@@ -221,7 +222,19 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (isTimed) ...[
+                        if (draft.phase == SessionPhase.rest) ...[
+                          Text(
+                            '${draft.remainingRestSeconds}',
+                            style: const TextStyle(
+                              color: AppColors.text,
+                              fontSize: 78,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Text(
+                            'secondes de repos avant la prochaine série',
+                          ),
+                        ] else if (isTimed) ...[
                           Text(
                             draft.phase == SessionPhase.preparation
                                 ? '${draft.preparationSeconds}'
@@ -308,20 +321,26 @@ class _SessionPageState extends State<SessionPage> with WidgetsBindingObserver {
                   ),
                 ],
                 const SizedBox(height: 10),
-                OutlinedButton(
-                  onPressed: draft.easierVariant
-                      ? null
-                      : () => _change(draft.useEasierVariant),
-                  child: const Text('Variante plus facile'),
-                ),
-                if (draft.easierVariant) ...[
-                  const SizedBox(height: 8),
-                  Text(_easierInstruction, textAlign: TextAlign.center),
+                if (draft.phase != SessionPhase.rest) ...[
+                  OutlinedButton(
+                    onPressed: draft.easierVariant
+                        ? null
+                        : () => _change(draft.useEasierVariant),
+                    child: const Text('Variante plus facile'),
+                  ),
+                  if (draft.easierVariant) ...[
+                    const SizedBox(height: 8),
+                    Text(_easierInstruction, textAlign: TextAlign.center),
+                  ],
                 ],
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => _change(draft.skip),
-                  child: const Text('Passer cet exercice'),
+                  child: Text(
+                    draft.phase == SessionPhase.rest
+                        ? 'Passer le repos'
+                        : 'Passer cet exercice',
+                  ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),

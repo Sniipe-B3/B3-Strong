@@ -6,6 +6,7 @@ import 'design_system/app_colors.dart';
 import 'domain/routine.dart';
 import 'domain/session.dart';
 import 'features/onboarding/onboarding_page.dart';
+import 'features/routine/routine_editor_page.dart';
 import 'features/session/session_page.dart';
 
 void main() => runApp(const PetitDepartApp());
@@ -148,7 +149,8 @@ class _RoutineGateState extends State<RoutineGate> {
   Future<void> edit() async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (_) => OnboardingPage(initialRoutine: routine, onSaved: save),
+        builder: (_) =>
+            RoutineEditorPage(initialRoutine: routine!, onSaved: save),
       ),
     );
   }
@@ -444,8 +446,10 @@ class TodayPage extends StatelessWidget {
                         },
                         title: exerciseById(routine.steps[index].exerciseId)
                             .name,
-                        target: exerciseById(routine.steps[index].exerciseId)
-                            .targetLabel(routine.steps[index].target),
+                        target: routine.steps[index].sets == 1
+                            ? exerciseById(routine.steps[index].exerciseId)
+                                  .targetLabel(routine.steps[index].target)
+                            : '${routine.steps[index].sets} × ${exerciseById(routine.steps[index].exerciseId).targetLabel(routine.steps[index].target)}',
                       ),
                     ],
                     const SizedBox(height: 22),

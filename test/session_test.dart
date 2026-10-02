@@ -104,4 +104,30 @@ void main() {
     expect(decoded.steps.single.target, 10);
     expect(decoded.feeling, 'Bien');
   });
+
+  test('Les séries ont un repos, puis les anciens objectifs restent figés', () {
+    const original = Routine(
+      steps: [
+        RoutineStep(exerciseId: 'plank', target: 10, sets: 2, restSeconds: 15),
+      ],
+      weekdays: {DateTime.wednesday},
+    );
+    final session = SessionDraft.start(original, started);
+    expect(session.steps.length, 2);
+    session.advance(13000);
+    expect(session.phase, SessionPhase.rest);
+    expect(session.results.single.target, 10);
+    session.advance(15000);
+    expect(session.phase, SessionPhase.preparation);
+    const changed = Routine(
+      steps: [RoutineStep(exerciseId: 'plank', target: 20)],
+      weekdays: {DateTime.wednesday},
+    );
+    expect(changed.steps.single.target, 20);
+    session.advance(13000);
+    final record = session.finish(started);
+    expect(record.outcome, SessionOutcome.completed);
+    expect(record.steps.map((step) => step.target), [10, 10]);
+    expect(record.activeMilliseconds, 20000);
+  });
 }

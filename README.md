@@ -15,6 +15,10 @@ est enregistrée dans le navigateur. Une vraie séance propose préparation,
 chronomètre ou compteur manuel, pause, reprise, passage et arrêt. Une séance
 interrompue reste partielle. Le dernier résultat est visible sur « Aujourd’hui » ;
 l'historique complet dans l'onglet Progrès arrivera à une étape ultérieure.
+Le bouton « Adapter la séance » permet d'ajouter, retirer et réordonner les
+exercices, d'ajuster objectifs, séries, repos et jours, puis de vérifier les
+changements avant de les enregistrer. Les anciennes séances gardent leurs
+objectifs d'origine.
 
 ## Publier sur Firebase Hosting
 

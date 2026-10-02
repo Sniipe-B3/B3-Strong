@@ -3,7 +3,7 @@ import 'dart:math' as math;
 
 import 'routine.dart';
 
-enum SessionPhase { preparation, timed, repetitions, finished }
+enum SessionPhase { preparation, timed, repetitions, rest, finished }
 
 enum StepOutcome { completed, partial, skipped }
 
@@ -117,6 +117,7 @@ class SessionDraft {
     required this.phase,
     required this.paused,
     required this.preparationMilliseconds,
+    required this.restMilliseconds,
     required this.currentActiveMilliseconds,
     required this.currentRepetitions,
     required this.totalMilliseconds,
@@ -124,7 +125,15 @@ class SessionDraft {
   });
 
   factory SessionDraft.start(Routine routine, DateTime now) {
-    final steps = List<RoutineStep>.of(routine.steps);
+    final steps = <RoutineStep>[
+      for (final step in routine.steps)
+        for (var setIndex = 0; setIndex < step.sets; setIndex++)
+          RoutineStep(
+            exerciseId: step.exerciseId,
+            target: step.target,
+            restSeconds: setIndex + 1 < step.sets ? step.restSeconds : 0,
+          ),
+    ];
     return SessionDraft._(
       id: now.microsecondsSinceEpoch.toString(),
       startedAt: now,
@@ -134,6 +143,7 @@ class SessionDraft {
       phase: _phaseFor(steps.first),
       paused: false,
       preparationMilliseconds: 0,
+      restMilliseconds: 0,
       currentActiveMilliseconds: 0,
       currentRepetitions: 0,
       totalMilliseconds: 0,
@@ -149,6 +159,7 @@ class SessionDraft {
   SessionPhase phase;
   bool paused;
   int preparationMilliseconds;
+  int restMilliseconds;
   int currentActiveMilliseconds;
   int currentRepetitions;
   int totalMilliseconds;
@@ -163,6 +174,10 @@ class SessionDraft {
   );
   int get preparationSeconds =>
       math.max(0, (3000 - preparationMilliseconds + 999) ~/ 1000);
+  int get remainingRestSeconds => math.max(
+    0,
+    (steps[index - 1].restSeconds * 1000 - restMilliseconds + 999) ~/ 1000,
+  );
 
   static SessionPhase _phaseFor(RoutineStep step) =>
       exerciseById(step.exerciseId).unit == ExerciseUnit.seconds
@@ -174,6 +189,15 @@ class SessionDraft {
     totalMilliseconds += milliseconds;
     if (paused || phase == SessionPhase.repetitions) return;
     var remaining = milliseconds;
+    if (phase == SessionPhase.rest) {
+      final restLeft = steps[index - 1].restSeconds * 1000 - restMilliseconds;
+      final used = math.min(remaining, restLeft);
+      restMilliseconds += used;
+      remaining -= used;
+      if (restMilliseconds == steps[index - 1].restSeconds * 1000) {
+        phase = _phaseFor(currentStep);
+      }
+    }
     if (phase == SessionPhase.preparation) {
       final preparationLeft = 3000 - preparationMilliseconds;
       final used = math.min(remaining, preparationLeft);
@@ -219,6 +243,10 @@ class SessionDraft {
 
   void skip() {
     if (isFinished) return;
+    if (phase == SessionPhase.rest) {
+      skipRest();
+      return;
+    }
     _finishCurrent(
       currentActiveMilliseconds > 0 || currentRepetitions > 0
           ? StepOutcome.partial
@@ -228,6 +256,10 @@ class SessionDraft {
 
   void stop() {
     if (isFinished) return;
+    if (phase == SessionPhase.rest) {
+      phase = SessionPhase.finished;
+      return;
+    }
     _finishCurrent(
       currentActiveMilliseconds > 0 || currentRepetitions > 0
           ? StepOutcome.partial
@@ -236,7 +268,12 @@ class SessionDraft {
     );
   }
 
+  void skipRest() {
+    if (phase == SessionPhase.rest) phase = _phaseFor(currentStep);
+  }
+
   void _finishCurrent(StepOutcome outcome, {bool stopSession = false}) {
+    final restAfterStep = currentStep.restSeconds;
     results.add(
       StepResult(
         exerciseId: currentStep.exerciseId,
@@ -252,9 +289,10 @@ class SessionDraft {
       return;
     }
     index++;
-    phase = _phaseFor(currentStep);
+    phase = restAfterStep > 0 ? SessionPhase.rest : _phaseFor(currentStep);
     paused = false;
     preparationMilliseconds = 0;
+    restMilliseconds = 0;
     currentActiveMilliseconds = 0;
     currentRepetitions = 0;
     easierVariant = false;
@@ -286,6 +324,7 @@ class SessionDraft {
     'phase': phase.name,
     'paused': paused,
     'preparationMilliseconds': preparationMilliseconds,
+    'restMilliseconds': restMilliseconds,
     'currentActiveMilliseconds': currentActiveMilliseconds,
     'currentRepetitions': currentRepetitions,
     'totalMilliseconds': totalMilliseconds,
@@ -314,6 +353,7 @@ class SessionDraft {
       // A page reload or browser restart always resumes in pause.
       paused: pauseOnRestore ? true : json['paused'] as bool,
       preparationMilliseconds: json['preparationMilliseconds'] as int,
+      restMilliseconds: json['restMilliseconds'] as int? ?? 0,
       currentActiveMilliseconds: json['currentActiveMilliseconds'] as int,
       currentRepetitions: json['currentRepetitions'] as int,
       totalMilliseconds: json['totalMilliseconds'] as int,

@@ -34,4 +34,30 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('Les anciennes routines restent lisibles avec une seule série', () {
+    final routine = Routine.fromJsonString(
+      '{"version":1,"steps":[{"exerciseId":"plank","target":10}],"weekdays":[1]}',
+    );
+    expect(routine.steps.single.sets, 1);
+    expect(routine.steps.single.restSeconds, 0);
+  });
+
+  test('Séries et repos sont conservés et bornés', () {
+    const routine = Routine(
+      steps: [
+        RoutineStep(exerciseId: 'plank', target: 10, sets: 2, restSeconds: 15),
+      ],
+      weekdays: {DateTime.monday},
+    );
+    final restored = Routine.fromJsonString(routine.toJsonString());
+    expect(restored.steps.single.sets, 2);
+    expect(restored.steps.single.restSeconds, 15);
+    expect(
+      () => Routine.fromJsonString(
+        '{"version":1,"steps":[{"exerciseId":"plank","target":10,"sets":6}],"weekdays":[1]}',
+      ),
+      throwsFormatException,
+    );
+  });
 }

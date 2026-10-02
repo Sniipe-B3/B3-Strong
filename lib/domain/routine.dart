@@ -33,21 +33,50 @@ ExerciseSpec exerciseById(String id) => exerciseCatalog.firstWhere(
 );
 
 class RoutineStep {
-  const RoutineStep({required this.exerciseId, required this.target});
+  const RoutineStep({
+    required this.exerciseId,
+    required this.target,
+    this.sets = 1,
+    this.restSeconds = 0,
+  });
 
   final String exerciseId;
   final int target;
+  final int sets;
+  final int restSeconds;
 
-  Map<String, Object> toJson() => {'exerciseId': exerciseId, 'target': target};
+  Map<String, Object> toJson() => {
+    'exerciseId': exerciseId,
+    'target': target,
+    'sets': sets,
+    'restSeconds': restSeconds,
+  };
 
   factory RoutineStep.fromJson(Map<String, dynamic> json) {
     final id = json['exerciseId'];
     final target = json['target'];
-    if (id is! String || target is! int || target < 1 || target > 300) {
+    // Existing routines have no series/rest fields: one set, no rest.
+    final sets = json['sets'] ?? 1;
+    final restSeconds = json['restSeconds'] ?? 0;
+    if (id is! String ||
+        target is! int ||
+        target < 1 ||
+        target > 300 ||
+        sets is! int ||
+        sets < 1 ||
+        sets > 5 ||
+        restSeconds is! int ||
+        restSeconds < 0 ||
+        restSeconds > 120) {
       throw const FormatException('Étape de routine invalide');
     }
     exerciseById(id);
-    return RoutineStep(exerciseId: id, target: target);
+    return RoutineStep(
+      exerciseId: id,
+      target: target,
+      sets: sets,
+      restSeconds: sets == 1 ? 0 : restSeconds,
+    );
   }
 }
 
@@ -65,7 +94,10 @@ class Routine {
 
   int get estimatedTimedSeconds => steps.fold<int>(0, (total, step) {
     final unit = exerciseById(step.exerciseId).unit;
-    return total + (unit == ExerciseUnit.seconds ? step.target + 15 : 0);
+    return total +
+        (unit == ExerciseUnit.seconds
+            ? (step.target + 3) * step.sets + step.restSeconds * (step.sets - 1)
+            : 0);
   });
 
   String toJsonString() => jsonEncode({
