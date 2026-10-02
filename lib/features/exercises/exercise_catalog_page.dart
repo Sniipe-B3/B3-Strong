@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../design_system/app_colors.dart';
 import '../../domain/exercise_content.dart';
 import 'exercise_illustration.dart';
+import 'exercise_motion_demo.dart';
 
 class ExerciseCatalogPage extends StatefulWidget {
   const ExerciseCatalogPage({super.key, this.onEditRoutine});
@@ -32,7 +33,8 @@ class _ExerciseCatalogPageState extends State<ExerciseCatalogPage> {
             const SizedBox(height: 8),
             const Text(
               'Des mouvements simples, à découvrir à votre rythme. '
-              'Les dessins sont des repères : lisez les consignes avant de commencer.',
+              'Ouvrez une fiche pour voir le mouvement animé. '
+              'Lisez les consignes avant de commencer.',
             ),
             const SizedBox(height: 16),
             const Text(
@@ -162,7 +164,7 @@ class ExerciseDetailPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(22, 18, 22, 32),
             children: [
-              Center(child: ExerciseIllustration(guide: guide, width: 300)),
+              ExerciseMotionDemo(guide: guide),
               const SizedBox(height: 22),
               Text(
                 guide.category.label.toUpperCase(),

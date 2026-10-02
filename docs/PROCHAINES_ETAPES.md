@@ -38,6 +38,10 @@ disponibles dans la routine ; l'étirement du mollet reste informatif, car le
 chronomètre ne suit pas encore chaque côté séparément. Une fiche prudente sur
 la course à pied complète le catalogue. Les sources sont dans
 [SOURCES_CONTENUS_SPORTIFS.md](SOURCES_CONTENUS_SPORTIFS.md).
+Les neuf fiches proposent désormais une démonstration schématique animée avec
+pause/reprise. Les vignettes restent fixes pour préserver les performances ;
+le réglage de réduction des animations de l'appareil affiche une pose fixe.
+Les consignes écrites restent prioritaires sur le schéma.
 Un bilan facultatif apparaît après une période choisie de 7, 14 ou 28 jours
 (sept par défaut) à partir d'une séance enregistrée. Chaque exercice peut être
 gardé, légèrement augmenté, réduit ou reporté indépendamment. Un aperçu montre

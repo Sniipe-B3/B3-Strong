@@ -16,7 +16,8 @@ chronomètre ou compteur manuel, pause, reprise, passage et arrêt. Une séance
 interrompue reste partielle. Le dernier résultat est visible sur « Aujourd’hui ».
 L'onglet « Progrès » présente la semaine en cours, les jours actifs, les temps
 et répétitions séparés, ainsi que l'historique détaillé des séances.
-L'onglet « Exercices » contient des fiches illustrées localement, avec consignes,
+L'onglet « Exercices » contient des fiches avec démonstrations animées locales,
+pause/reprise et image fixe si l'appareil demande moins d'animations, avec consignes,
 variantes, précautions et sources vérifiées dans
 [SOURCES_CONTENUS_SPORTIFS.md](docs/SOURCES_CONTENUS_SPORTIFS.md). L'étirement
 du mollet est une fiche de découverte, pas encore un exercice chronométré.
