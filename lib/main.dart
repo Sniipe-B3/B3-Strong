@@ -6,6 +6,7 @@ import 'design_system/app_colors.dart';
 import 'domain/routine.dart';
 import 'domain/session.dart';
 import 'features/onboarding/onboarding_page.dart';
+import 'features/progress/progress_page.dart';
 import 'features/routine/routine_editor_page.dart';
 import 'features/session/session_page.dart';
 
@@ -107,6 +108,7 @@ class _RoutineGateState extends State<RoutineGate> {
   Routine? routine;
   SessionDraft? activeSession;
   SessionRecord? lastRecord;
+  List<SessionRecord> records = [];
   SessionRecord? summary;
   bool loading = true;
   bool failed = false;
@@ -131,7 +133,12 @@ class _RoutineGateState extends State<RoutineGate> {
         setState(() {
           routine = saved;
           activeSession = active;
-          lastRecord = records.isEmpty ? null : records.last;
+          this.records = List.of(records);
+          lastRecord = records.isEmpty
+              ? null
+              : (List<SessionRecord>.of(
+                  records,
+                )..sort((a, b) => b.endedAt.compareTo(a.endedAt))).first;
         });
       }
     } catch (_) {
@@ -179,6 +186,11 @@ class _RoutineGateState extends State<RoutineGate> {
     setState(() {
       activeSession = null;
       lastRecord = record;
+      records = [
+        for (final saved in records)
+          if (saved.id != record.id) saved,
+        record,
+      ];
       summary = record;
     });
   }
@@ -192,6 +204,9 @@ class _RoutineGateState extends State<RoutineGate> {
       setState(() {
         summary = updated;
         lastRecord = updated;
+        records = [
+          for (final saved in records) saved.id == updated.id ? updated : saved,
+        ];
       });
     }
   }
@@ -243,6 +258,7 @@ class _RoutineGateState extends State<RoutineGate> {
       onStart: start,
       starting: starting,
       lastRecord: lastRecord,
+      records: records,
     );
   }
 }
@@ -256,6 +272,7 @@ class AppShell extends StatefulWidget {
     required this.onStart,
     required this.starting,
     required this.lastRecord,
+    required this.records,
   });
 
   final Routine routine;
@@ -264,6 +281,7 @@ class AppShell extends StatefulWidget {
   final VoidCallback onStart;
   final bool starting;
   final SessionRecord? lastRecord;
+  final List<SessionRecord> records;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -288,11 +306,7 @@ class _AppShellState extends State<AppShell> {
         title: 'Exercices',
         message: 'Le catalogue d’exercices arrive à une prochaine étape.',
       ),
-      const PlaceholderPage(
-        icon: Icons.insights_rounded,
-        title: 'Progrès',
-        message: 'Votre historique apparaîtra ici après vos premières séances.',
-      ),
+      ProgressPage(records: widget.records, now: widget.today()),
     ];
 
     return Scaffold(

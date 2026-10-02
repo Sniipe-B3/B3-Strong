@@ -1,6 +1,6 @@
 # Prochaines étapes — Petit départ
 
-Mise à jour : 30 septembre 2026. Ce fichier suit l'avancement concret du projet.
+Mise à jour : 2 octobre 2026. Ce fichier suit l'avancement concret du projet.
 Le cahier des charges détaillé se trouve dans [le guide de A à Z](GUIDE_PROJET_DE_A_A_Z.md).
 
 ## Où en est-on ?
@@ -25,11 +25,14 @@ mise en pause, reprise, passée ou arrêtée. Les résultats, y compris partiels
 sont sauvegardés localement ; le dernier apparaît sur « Aujourd'hui » après un
 rechargement. Une séance interrompue par le navigateur revient en pause, sans
 compter le temps passé hors de l'application. Une mise à jour de la PWA attend
-la fin d'une séance avant de proposer l'actualisation. Les onglets Exercices et
-Progrès restent des écrans d'attente : l'historique complet viendra plus tard.
+la fin d'une séance avant de proposer l'actualisation. L'onglet Exercices reste
+un écran d'attente.
 La routine peut maintenant être modifiée exercice par exercice, avec séries,
 repos et jours, après un aperçu avant confirmation. Les anciennes séances
 gardent les objectifs qui étaient en vigueur au moment où elles ont commencé.
+L'onglet Progrès affiche les séances de la semaine, les jours réellement actifs,
+les durées et répétitions séparées, l'historique et de petits jalons sans série
+de jours à préserver.
 
 ## Ordre de travail
 
@@ -86,6 +89,8 @@ partielle n'est jamais affichée comme terminée.
 séance, sans modifier les séances déjà enregistrées.
 
 ### 4. Progrès simples et reprise sereine
+
+**Statut : terminé et vérifié par tests ; déployé sur Firebase Hosting.**
 
 **Modèle conseillé : GPT-6.1 Sol, niveau Medium.**
 
@@ -162,4 +167,4 @@ deux sujets distincts.
    ajouter `build/`, `.dart_tool/`, `.firebase/`, journaux ou secrets au dépôt.
 5. Mettre ce fichier à jour pour marquer l'étape achevée et indiquer la suivante.
 
-La prochaine étape de développement est **4. Progrès simples et reprise sereine**.
+La prochaine étape de développement est **5. Bilan et progression choisie**.

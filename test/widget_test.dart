@@ -171,4 +171,47 @@ void main() {
     expect(find.text('Dernière séance'), findsOneWidget);
     expect(find.text('Partielle'), findsOneWidget);
   });
+
+  testWidgets('L’onglet Progrès lit les séances sauvegardées', (tester) async {
+    final routineStore = MemoryRoutineStore()
+      ..routine = const Routine(
+        steps: [RoutineStep(exerciseId: 'squat', target: 2)],
+        weekdays: {DateTime.friday},
+      );
+    final sessions = MemorySessionStore();
+    sessions.records.add(
+      SessionRecord(
+        id: 'saved',
+        startedAt: DateTime(2026, 10, 2, 9),
+        endedAt: DateTime(2026, 10, 2, 9, 1),
+        outcome: SessionOutcome.completed,
+        totalMilliseconds: 60000,
+        steps: const [
+          StepResult(
+            exerciseId: 'squat',
+            target: 2,
+            activeMilliseconds: 0,
+            repetitions: 2,
+            outcome: StepOutcome.completed,
+            easierVariant: false,
+          ),
+        ],
+      ),
+    );
+    await tester.pumpWidget(
+      PetitDepartApp(
+        store: routineStore,
+        sessionStore: sessions,
+        today: () => DateTime(2026, 10, 2),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.insights_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Cette semaine'), findsOneWidget);
+    expect(find.text('Jours actifs'), findsOneWidget);
+    expect(find.text('1'), findsWidgets);
+    await tester.scrollUntilVisible(find.text('02/10/2026'), 200);
+    expect(find.text('Terminée'), findsOneWidget);
+  });
 }

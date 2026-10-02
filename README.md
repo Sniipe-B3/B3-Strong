@@ -13,8 +13,9 @@ python3 -m http.server 8080 --bind 0.0.0.0 --directory build/web
 Ouvrir ensuite le port 8080 dans l'onglet **Ports** de VS Code. La routine choisie
 est enregistrée dans le navigateur. Une vraie séance propose préparation,
 chronomètre ou compteur manuel, pause, reprise, passage et arrêt. Une séance
-interrompue reste partielle. Le dernier résultat est visible sur « Aujourd’hui » ;
-l'historique complet dans l'onglet Progrès arrivera à une étape ultérieure.
+interrompue reste partielle. Le dernier résultat est visible sur « Aujourd’hui ».
+L'onglet « Progrès » présente la semaine en cours, les jours actifs, les temps
+et répétitions séparés, ainsi que l'historique détaillé des séances.
 Le bouton « Adapter la séance » permet d'ajouter, retirer et réordonner les
 exercices, d'ajuster objectifs, séries, repos et jours, puis de vérifier les
 changements avant de les enregistrer. Les anciennes séances gardent leurs
@@ -62,7 +63,9 @@ Les données de routine et de séance sont locales au navigateur, pas synchronis
 par Firebase Hosting. Effacer les données du site les supprimera. Le temps actif
 exclut préparation et pauses ; la durée totale comprend le temps passé sur la
 séance quand elle est ouverte, pauses comprises, mais pas la période où le site
-est fermé.
+est fermé. Les statistiques de semaine utilisent le jour local de fin de séance,
+du lundi au dimanche. Une séance interrompue sans effort reste dans l'historique
+mais ne compte pas comme jour actif.
 
 Le navigateur doit visiter le site une première fois en ligne pour installer
 les fichiers nécessaires au mode hors connexion. Après cette visite, tester
